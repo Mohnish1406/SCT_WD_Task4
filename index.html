@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .task-form input, .task-form button {
+            padding: 8px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        .task-form button {
+            cursor: pointer;
+        }
+        .task {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            width: 300px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .task.completed {
+            text-decoration: line-through;
+            color: grey;
+        }
+        .task button {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>To-Do App</h1>
+
+    <!-- Task Form -->
+    <div class="task-form">
+        <input type="text" id="task-title" placeholder="Task title" required>
+        <input type="text" id="task-list" placeholder="List name (optional)">
+        <input type="datetime-local" id="task-date">
+        <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <!-- Task Container -->
+    <div id="task-container"></div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        // Function to add a new task
+        function addTask() {
+            const title = document.getElementById('task-title').value;
+            const listName = document.getElementById('task-list').value || 'General';
+            const dueDate = document.getElementById('task-date').value;
+
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                title,
+                listName,
+                dueDate,
+                completed: false
+            };
+
+            tasks.push(newTask);
+            saveTasks();
+            renderTasks();
+
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-list').value = '';
+            document.getElementById('task-date').value = '';
+        }
+
+        // Function to save tasks to localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Function to render tasks
+        function renderTasks() {
+            const taskContainer = document.getElementById('task-container');
+            taskContainer.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskDiv = document.createElement('div');
+                taskDiv.classList.add('task');
+                if (task.completed) taskDiv.classList.add('completed');
+
+                taskDiv.innerHTML = `
+                    <span>
+                        <strong>${task.title}</strong> - ${task.listName}<br>
+                        ${task.dueDate ? `<em>Due: ${new Date(task.dueDate).toLocaleString()}</em>` : ''}
+                    </span>
+                    <div>
+                        <button onclick="toggleComplete(${task.id})">${task.completed ? 'Undo' : 'Complete'}</button>
+                        <button onclick="editTask(${task.id})">Edit</button>
+                        <button onclick="deleteTask(${task.id})">Delete</button>
+                    </div>
+                `;
+                taskContainer.appendChild(taskDiv);
+            });
+        }
+
+        // Function to mark a task as complete/incomplete
+        function toggleComplete(taskId) {
+            tasks = tasks.map(task => task.id === taskId ? {...task, completed: !task.completed} : task);
+            saveTasks();
+            renderTasks();
+        }
+
+        // Function to edit a task
+        function editTask(taskId) {
+            const task = tasks.find(task => task.id === taskId);
+            const newTitle = prompt('Edit task title', task.title);
+            const newList = prompt('Edit list name', task.listName);
+            const newDate = prompt('Edit due date', task.dueDate);
+
+            if (newTitle !== null) task.title = newTitle;
+            if (newList !== null) task.listName = newList;
+            if (newDate !== null) task.dueDate = newDate;
+
+            saveTasks();
+            renderTasks();
+        }
+
+        // Function to delete a task
+        function deleteTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
+        }
+
+        // Initial render
+        renderTasks();
+    </script>
+</body>
+</html>
